@@ -31,7 +31,7 @@
 *.out
 *.app
 
-*.server_Release
-*.server_Debug
+server_Release
+server_Debug
 Release/
 Debug/
