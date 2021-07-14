@@ -31,11 +31,13 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::Send(const std::string& msg)
 {
-	if (loop_->IsInLoopThread()) {
-		SendInLoop(msg);
-	}
-	else {
-		loop_->RunInLoop(std::bind(&TcpConnection::SendInLoop, this, msg));
+	if (state_ == kConnected) {
+		if (loop_->IsInLoopThread()) {
+			SendInLoop(msg);
+		}
+		else {
+			loop_->RunInLoop(std::bind(&TcpConnection::SendInLoop, this, msg));
+		}
 	}
 }
 
