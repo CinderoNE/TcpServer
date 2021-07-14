@@ -4,7 +4,7 @@
 
 bool HttpContext::ParseRequest(Buffer* buf, Timestamp receiveTime)
 {
-    bool ok = true;
+    bool ok = false;
     bool hasMore = true;
     while (hasMore)
     {
