@@ -33,3 +33,5 @@
 
 *.server_Release
 *.server_Debug
+Release/
+Debug/
