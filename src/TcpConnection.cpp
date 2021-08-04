@@ -148,7 +148,7 @@ void TcpConnection::HandleRead(Timestamp receive_time)
 		HandleClose();
 	}
 	else {
-		std::cerr << "HandleRead error,errorno" << save_err << std::endl;
+		//std::cerr << "HandleRead error,errorno" << save_err << std::endl;
 		HandleError();
 	}
 	
@@ -244,17 +244,13 @@ void TcpConnection::ForceClose()
 
 void TcpConnection::HandleError()
 {
-	int error = Socket::GetSockError(socket_->sock_fd());
-	
+	/*int error = Socket::GetSockError(socket_->sock_fd());
 	
 	char buf[32];
 	bzero(buf, sizeof buf);
 	char* error_msg = strerror_r(error, buf, sizeof buf);
-	/*std::cerr << "TcpConnection::handleError [" << name_
+	std::cerr << "TcpConnection::handleError [" << name_
 		<< "] - SO_ERROR = " << error << " " << error_msg << std::endl;*/
-	
-	
-
 	
 
 }

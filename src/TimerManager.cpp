@@ -109,13 +109,14 @@ void TimerManager::ResetTimer(const SPTimer& reset_timer)
 void TimerManager::TimerfdRead()
 {
 	uint64_t how_many;
-	ssize_t n = read(timerfd_, &how_many, sizeof how_many);
-	//Timestamp now = Timestamp::now();
-	//std::cout << "TimerfdRead() : " << how_many << "at " << now.ToStr() << std::endl;;
+	ssize_t n = read(timerfd_, &how_many, sizeof how_many); //返回到期次数
+	(void)n;
+	
 }
 
 void TimerManager::HandleExpiredEvent(Timestamp receive_time)
 {
+	(void)receive_time;
 	/*std::cout << "HandleExpiredEvent Before: " << timer_queue_.size() << std::endl;*/
 	TimerfdRead();
 	while (!timer_queue_.empty()) {
@@ -139,9 +140,6 @@ void TimerManager::HandleExpiredEvent(Timestamp receive_time)
 			break;
 		}
 	}
-	/*std::cout << "spend time : " << (Timestamp::NowNano() - receive_time.nano_second_since_epoch()) 
-		/ Timestamp::kNanoSecondsPerMilliSecond << " ms" << std::endl;*/
-	//std::cout << "HandleExpiredEvent After: " << timer_queue_.size() << std::endl;
 }
 
 void TimerManager::ResetExpiredTime()

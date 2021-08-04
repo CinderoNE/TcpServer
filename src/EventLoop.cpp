@@ -93,6 +93,7 @@ void EventLoop::WakeUp()
 	//cout << "WakeUp : " << wakeup_fd_ << endl;
 	u_int64_t one = 1;
 	ssize_t n = write(wakeup_fd_, &one, sizeof one);
+	(void)n;
 }
 
 //wakeup handle
@@ -101,6 +102,7 @@ void EventLoop::HandleRead()
 	//cout << "wakeup handle" << endl;
 	u_int64_t one = 1;
 	ssize_t n = read(wakeup_fd_, &one, sizeof one);
+	(void)n;
 }
 
 void EventLoop::DoPendingFunctor()
