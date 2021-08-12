@@ -148,15 +148,15 @@ public:
         headers_[field] = value;  // 将解析出来的头信息放入map中
     }
 
-    std::string getHeader(const std::string& field) const
+    const std::string& getHeader(const std::string& field) const
     {
-        std::string result;
-        std::map<std::string, std::string>::const_iterator it = headers_.find(field);
+        static std::string empty_str;
+        auto it = headers_.find(field);
         if (it != headers_.end())
         {
-            result = it->second;
+            return it->second;
         }
-        return result;
+        return empty_str;
     }
 
     const std::map<std::string, std::string>& headers() const

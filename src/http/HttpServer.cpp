@@ -125,9 +125,12 @@ void HttpServer::OnMessage(const TcpServer::SPTcpConnection& conn, Buffer* buf, 
 
 void HttpServer::OnRequest(const TcpServer::SPTcpConnection& conn, const HttpRequest& http_request)
 {
-	const std::string& connection = http_request.getHeader("Connection");
+	std::string& connection = const_cast<std::string&>(http_request.getHeader("Connection"));
+	for (size_t i = 0; i < connection.size(); ++i) {
+		connection[i] = std::tolower(static_cast<unsigned char>(connection[i]));
+	}
 	bool close = connection == "close" ||
-		(http_request.getVersion() == HttpRequest::kHttp10 && connection != "Keep-Alive");
+		(http_request.getVersion() == HttpRequest::kHttp10 && connection != "keep-alive");
 	HttpResponse response(close); // 构造响应
 	http_callback_(http_request, &response);  // 用户回调
 	std::string buf;
