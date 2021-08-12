@@ -68,7 +68,7 @@ TimerManager::~TimerManager()
 
 TimerManager::SPTimer TimerManager::AddTimer(Timestamp when, const TimerCallback & cb)
 {
-	SPTimer new_timer = std::make_shared<Timer>(when, cb);
+	SPTimer new_timer = std::make_shared<Timer>(when, std::move(cb));
 	//如果是其他线程调用，转移到IO线程，可以避免锁操作（timer_queue_）
 	loop_->RunInLoop(std::bind(&TimerManager::AddTimerInLoop, this, new_timer));
 	

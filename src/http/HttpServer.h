@@ -31,7 +31,7 @@ private:
 
 	void OnConnection(const TcpServer::SPTcpConnection& conn);
 	void OnMessage(const TcpServer::SPTcpConnection& conn, Buffer* buf, Timestamp receive_time);
-	void OnRequest(const TcpServer::SPTcpConnection& conn, const HttpRequest& http_request);
+	bool OnRequest(const TcpServer::SPTcpConnection& conn, const HttpRequest& http_request);
 
 	TcpServer tcp_server_;
 	

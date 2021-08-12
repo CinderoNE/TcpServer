@@ -20,7 +20,7 @@ public:
 	using SPTcpConnection = std::shared_ptr<TcpConnection>;
 
 	using ConnectionCallback = std::function<void(const SPTcpConnection&)>;
-	using MessageCallback = std::function<void(const SPTcpConnection&,Buffer*,Timestamp)>;
+	using MessageCallback = std::function<void(const SPTcpConnection&, Buffer*, Timestamp)>;
 	using CloseCallback = std::function<void(const SPTcpConnection&)>;
 	using SendCompleteCallback = std::function<void(const SPTcpConnection&)>;
 
@@ -43,7 +43,7 @@ public:
 		send_complete_callback_ = cb;
 	}
 
-	void set_context(const HttpContext& context) {
+	void set_context(HttpContext* context) {
 		context_ = context;
 	}
 
@@ -72,12 +72,12 @@ public:
 	}
 
 	HttpContext* context() {
-		return &context_;
+		return context_;
 	}
-	
+
 private:
 	//KpeerFIN：对端主动关闭连接
-	enum State{kConneting,kConnected,kDisconnecting,kDisconnected,kPeerFIN};
+	enum State { kConneting, kConnected, kDisconnecting, kDisconnected, kPeerFIN };
 
 	void set_state(State state) {
 		state_ = state;
@@ -104,9 +104,9 @@ private:
 	Buffer read_buffer_;
 	Buffer write_buffer_;
 
-	HttpContext context_; //for http server
+	HttpContext* context_ = nullptr; //for http server
 
-	
+
 
 };
 

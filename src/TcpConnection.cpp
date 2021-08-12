@@ -8,8 +8,8 @@
 #include<cstring>
 #include <cassert>
 
-TcpConnection::TcpConnection(EventLoop* loop, int client_fd, const InetAddress& client_addr, const std::string& conn_name):
-	loop_(loop),
+TcpConnection::TcpConnection(EventLoop* loop, int client_fd, const InetAddress& client_addr, const std::string& conn_name) 
+	:loop_(loop),
 	channel_(std::make_unique<Channel>(client_fd)),
 	socket_(std::make_unique<Socket>(client_fd)),
 	client_addr_(client_addr),
@@ -17,16 +17,18 @@ TcpConnection::TcpConnection(EventLoop* loop, int client_fd, const InetAddress& 
 	state_(kConneting)
 {
 	channel_->EnableRead();
-	channel_->set_read_callback(std::bind(&TcpConnection::HandleRead,this,std::placeholders::_1));
+	channel_->set_read_callback(std::bind(&TcpConnection::HandleRead, this, std::placeholders::_1));
 	channel_->set_write_callback(std::bind(&TcpConnection::HandleWrite, this));
 	channel_->set_close_callback(std::bind(&TcpConnection::HandleClose, this));
 	channel_->set_error_callback(std::bind(&TcpConnection::HandleError, this));
-	
+
 }
 
 TcpConnection::~TcpConnection()
 {
-	//std::cout << "TcpConnection dtor" << std::endl;
+	if (context_ != nullptr) {
+		delete context_;
+	}
 }
 
 void TcpConnection::Send(const std::string& msg)
@@ -59,7 +61,6 @@ void TcpConnection::SendInLoop(const std::string& msg)
 				if (send_complete_callback_) {
 					send_complete_callback_(shared_from_this());
 				}
-					
 			}
 		}
 		else {
@@ -71,6 +72,7 @@ void TcpConnection::SendInLoop(const std::string& msg)
 	}
 
 	if (static_cast<size_t>(write_n) < msg.size()) {
+		//msg中还有数据未写完
 		write_buffer_.Append(msg.data() + write_n, msg.size() - write_n);
 		channel_->EnableWrite();
 		loop_->EpollUpdateChannel(channel_.get());
@@ -89,18 +91,16 @@ void TcpConnection::Shutdown()
 			loop_->RunInLoop(std::bind(&TcpConnection::ShutdownInLoop, shared_from_this()));
 		}
 	}
-	
 }
 
 
 void TcpConnection::ShutdownInLoop()
 {
 	loop_->AssertInLoopThread();
-	//如果没有数据未写出去，则直接关闭写端(发送FIN给对端)，
-	// 之后通过HandleRead读到0关闭连接
-
+	//如果没有数据未写出去，则直接关闭写端(发送FIN给对端)， 之后通过HandleRead读到0关闭连接
 	//如果还有数据未写出去，则在HandleWrite中重新调用ShutdownInLoop
-	if (!channel_->IsWriting()) {
+	if (write_buffer_.ReadableBytes() == 0) {
+		//std::cout << "TcpConnection::ShutdownWrite [" <<   name_ << "] " <<client_addr_.ToString() << std::endl;
 		socket_->ShutdownWrite();
 	}
 
@@ -118,7 +118,6 @@ void TcpConnection::ConnectionEstablished()
 	set_state(kConnected);
 	loop_->EpollAddChannel(channel_.get());
 	connection_callback_(shared_from_this());
-	
 }
 
 void TcpConnection::ConnectionDestoryed()
@@ -148,20 +147,18 @@ void TcpConnection::HandleRead(Timestamp receive_time)
 		HandleClose();
 	}
 	else {
-		//std::cerr << "HandleRead error,errorno" << save_err << std::endl;
 		HandleError();
 	}
-	
+
 }
 
 void TcpConnection::HandleWrite()
 {
 	//是否还有数据未写出去
-	//触发了close事件后，会取消所有注册事件(DisableAll)，所以不会进入
-	if (channel_->IsWriting()) {
-		//这里没有循环调用send
-		//如果一次send没有发送完全部数据，
-		//第二次肯定会返回EAGAIN，因此这样可以节省一次系统调用
+	//这里没有循环调用send
+	//如果一次send没有发送完全部数据，
+	//第二次肯定会返回EAGAIN，因此这样可以节省一次系统调用
+	if (write_buffer_.ReadableBytes() > 0) {
 		ssize_t write_n = write(channel_->GetFd(),
 			write_buffer_.ReadBegin(),
 			write_buffer_.ReadableBytes());
@@ -170,10 +167,7 @@ void TcpConnection::HandleWrite()
 			write_buffer_.Retrieve(write_n);
 			//数据已经发送完
 			if (write_buffer_.ReadableBytes() == 0) {
-				//std::cout << "HandleWrite() send finish" << std::endl;
 
-				channel_->DisalbeWrite();
-				loop_->EpollUpdateChannel(channel_.get());
 				if (send_complete_callback_) {
 					send_complete_callback_(shared_from_this());
 				}
@@ -182,37 +176,27 @@ void TcpConnection::HandleWrite()
 					ForceClose();
 					return;
 				}
-				
+
 				//己方主动关闭连接，发送完未发送数据后，关闭write端(主动发送FIN)，
 				//之后HandleRead读到0（对方FIN），再关闭连接
 				if (state_ == kDisconnecting) {
 					ShutdownInLoop();
+					return;
 				}
-			}
-			else {
-				std::cout << "need send more data !" << std::endl;
 			}
 		}
 		else {
 			//socket写缓冲已满，等待下一次epoll返回
 			if (errno == EAGAIN) {
-				std::cout << "need send more data !" << std::endl;
+				return;
 			}
-			else 
+			else
 			{
-				//如果不是对方主动关闭连接，一旦出现错误，HandleRead()会读到0字节，继而关闭连接
-				//std::cout << "HandleWrite error,errno : " << errno << std::endl;
-				if (state_ == kPeerFIN) {
-					//强制关闭是因为，如果发生错误且write_buffer_中还有数据，HandleClose()不会关闭连接
-					ForceClose();
-				}
-				
+				HandleError();
 			}
 		}
 	}
-	else {
-		//std::cout << "connection down no more write" << std::endl;
-	}
+
 }
 
 void TcpConnection::HandleClose()
@@ -223,12 +207,10 @@ void TcpConnection::HandleClose()
 		ForceClose();
 	}
 	//对方主动关闭连接
-	else if(state_ == kPeerFIN){
-		//还有数据未发送
-		if (write_buffer_.ReadableBytes() != 0) {
-			
-		}
-		else {
+	else if (state_ == kPeerFIN) {
+		//数据已发送完，直接关闭
+		//未发送完会在HandleWrite中继续处理
+		if (write_buffer_.ReadableBytes() == 0) {
 			ForceClose();
 		}
 	}
@@ -245,14 +227,14 @@ void TcpConnection::ForceClose()
 void TcpConnection::HandleError()
 {
 	int error = Socket::GetSockError(socket_->sock_fd());
-	
+
+
 	char buf[32];
 	bzero(buf, sizeof buf);
 	char* error_msg = strerror_r(error, buf, sizeof buf);
 	std::cerr << "TcpConnection::handleError [" << name_
 		<< "] - SO_ERROR = " << error << " " << error_msg << std::endl;
-	
-
+	ForceClose();
 }
 
 

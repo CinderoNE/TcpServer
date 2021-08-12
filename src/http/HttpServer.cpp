@@ -96,7 +96,7 @@ void HttpServer::OnConnection(const TcpServer::SPTcpConnection& conn)
 {
 	if (conn->Connected()) {
 		/*std::cout << "new connection : " << conn->name() << std::endl;*/
-		conn->set_context(HttpContext());
+		conn->set_context(new HttpContext());
 		
 	}
 	else {
@@ -118,12 +118,12 @@ void HttpServer::OnMessage(const TcpServer::SPTcpConnection& conn, Buffer* buf, 
 	// 请求消息解析完毕
 	if (http_context->ParseFinish())  // state_ == ParseFinish
 	{
-		OnRequest(conn, http_context->request());
-		http_context->reset(); // 本次请求处理完毕，重置HttpContext，适用于长连接(一个连接多次请求)
+		if(OnRequest(conn, http_context->request()))
+			http_context->reset(); // 长连接才重置
 	}
 }
 
-void HttpServer::OnRequest(const TcpServer::SPTcpConnection& conn, const HttpRequest& http_request)
+bool HttpServer::OnRequest(const TcpServer::SPTcpConnection& conn, const HttpRequest& http_request)
 {
 	std::string& connection = const_cast<std::string&>(http_request.getHeader("Connection"));
 	for (size_t i = 0; i < connection.size(); ++i) {
@@ -141,6 +141,7 @@ void HttpServer::OnRequest(const TcpServer::SPTcpConnection& conn, const HttpReq
 	if (response.closeConnection())
 	{
 		conn->Shutdown();
+		return false; //close
 	}
 	else {
 		if (!conn->context()->ShutdownTimerExpired()) {
@@ -150,6 +151,7 @@ void HttpServer::OnRequest(const TcpServer::SPTcpConnection& conn, const HttpReq
 			conn->context()->set_shutdown_timer(
 				conn->GetLoop()->RunAfter(5.0, std::bind(&TcpConnection::Shutdown, conn))); //5秒后没有收到消息关闭连接
 		}	
+		return true; //keep-alive
 	}
 }
 

@@ -47,9 +47,9 @@ public:
 	TimerManager::SPTimer RunAfter(double delay, const TimerCallback& cb);
 	
 
-	void RunInLoop(const Functor& cb);
+	void RunInLoop(Functor&& cb);
 
-	void QueueInLoop(const Functor& cb);
+	void QueueInLoop(Functor&& cb);
 
 	void WakeUp();
 

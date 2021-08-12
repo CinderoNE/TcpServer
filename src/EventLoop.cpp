@@ -67,19 +67,19 @@ TimerManager::SPTimer EventLoop::RunAfter(double delay, const TimerCallback& cb)
 	return RunAt(ts, cb);
 }
 
-void EventLoop::RunInLoop(const Functor& cb) {
+void EventLoop::RunInLoop(Functor&& cb) {
 	if (IsInLoopThread()) {
 		cb();
 	}
 	else {
-		QueueInLoop(cb);
+		QueueInLoop(std::move(cb));
 	}
 }
 
-void EventLoop::QueueInLoop(const Functor& cb) {
+void EventLoop::QueueInLoop(Functor&& cb) {
 	{
 		std::lock_guard<std::mutex> guard(mutex_);
-		pending_functors_.push_back(cb);
+		pending_functors_.emplace_back(std::move(cb));
 	}
 	//如果正在callingPendingFunctors_,调用完后会进入epoll_wait等待，所以需要唤醒
 	if (!IsInLoopThread() || callingPendingFunctors_) {

@@ -23,7 +23,6 @@ void Acceptor::AcceptHandler()
 	//循环接收所有连接
 	//新建立的socket默认是nonblocking
 	while ((client_fd = accept_socket_.Accept(&client_addr)) > 0) {
-		
 		if (new_connection_callback_) {
 			new_connection_callback_(client_fd, client_addr);
 		}
