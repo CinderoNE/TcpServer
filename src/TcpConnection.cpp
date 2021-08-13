@@ -17,6 +17,7 @@ TcpConnection::TcpConnection(EventLoop* loop, int client_fd, const InetAddress& 
 	state_(kConneting)
 {
 	channel_->EnableRead();
+	channel_->EnableWrite();
 	channel_->set_read_callback(std::bind(&TcpConnection::HandleRead, this, std::placeholders::_1));
 	channel_->set_write_callback(std::bind(&TcpConnection::HandleWrite, this));
 	channel_->set_close_callback(std::bind(&TcpConnection::HandleClose, this));
@@ -74,8 +75,8 @@ void TcpConnection::SendInLoop(const std::string& msg)
 	if (static_cast<size_t>(write_n) < msg.size()) {
 		//msg中还有数据未写完
 		write_buffer_.Append(msg.data() + write_n, msg.size() - write_n);
-		channel_->EnableWrite();
-		loop_->EpollUpdateChannel(channel_.get());
+		//channel_->EnableWrite();
+		//loop_->EpollUpdateChannel(channel_.get());
 	}
 
 }
