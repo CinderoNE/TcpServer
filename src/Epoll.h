@@ -6,7 +6,7 @@
 
 #include<vector>
 #include<sys/epoll.h>
-#include<map>
+#include<unordered_map>
 
 
 
@@ -32,7 +32,7 @@ public:
 
 private:
 
-	using ChannelMap = std::map<int, Channel*>;
+	using ChannelMap = std::unordered_map<int, Channel*>;
 
 	std::vector<struct epoll_event> event_list_;
 	

@@ -3,6 +3,7 @@
 #include<iostream>
 #include <sys/eventfd.h> //for wakeup
 #include<unistd.h>
+#include<cassert>
 using std::cout;
 using std::endl;
 
@@ -39,7 +40,8 @@ EventLoop::EventLoop()
 
 EventLoop::~EventLoop()
 {
-	
+	assert(!looping_);
+	close(wakeup_fd_);
 }
 
 void EventLoop::Loop()

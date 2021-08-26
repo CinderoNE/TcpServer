@@ -2,6 +2,7 @@
 #ifndef _BUFFER_H_
 #define _BUFFER_H_
 
+#include<vector>
 #include<string>
 #include<algorithm>
 /*
@@ -133,7 +134,7 @@ private:
 	}
 
 private:
-	std::string buffer_;
+	std::vector<char> buffer_;
 	size_t read_index_;
 	size_t write_index_;
 
