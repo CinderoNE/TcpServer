@@ -34,20 +34,20 @@ public:
 	TimerCallback get_timer_callback ()const {
 		return timer_callback_;
 	}
-	// kDeleted 取消计时器（不执行到期回调），不会重新添加
-	// kReset //取消计时器,到期后执行reset回调(需要设置者自己重新添加定时器)
-	enum State { kNormal, kDeleted, kReset };
+	// kCanceled 取消计时器（不执行到期回调），不会重新添加
+	// kReset 重置定时器，重新添加
+	enum State { kNormal, kCanceled, kReset };
 
 	void SetNormal() {
 		state_ = kNormal;
 	}
 
-	void SetDeleted() {
-		state_ = kDeleted;
+	void SetCanceled() {
+		state_ = kCanceled;
 	}
 
-	bool IsDeleted() const {
-		return state_ == kDeleted;
+	bool IsCanceled() const {
+		return state_ == kCanceled;
 	}
 
 	bool IsReset() const {

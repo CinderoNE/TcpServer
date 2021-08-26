@@ -121,7 +121,7 @@ void TimerManager::HandleExpiredEvent(Timestamp receive_time)
 	TimerfdRead();
 	while (!timer_queue_.empty()) {
 		SPTimer top_timer = timer_queue_.top();
-		if (top_timer->IsDeleted()) {
+		if (top_timer->IsCanceled()) {
 			timer_queue_.pop();
 		}
 		else if (!top_timer->IsValid()) {
