@@ -1,4 +1,4 @@
-ADD_EXECUTABLE(server_${CMAKE_BUILD_TYPE} 
+ADD_EXECUTABLE(server 
     Acceptor.cpp
     Buffer.cpp
     Channel.cpp
@@ -19,7 +19,7 @@ ADD_EXECUTABLE(server_${CMAKE_BUILD_TYPE}
     http/HttpResponse.cpp
     http/HttpServer.cpp
 )
-TARGET_LINK_LIBRARIES(server_${CMAKE_BUILD_TYPE} pthread)
+TARGET_LINK_LIBRARIES(server pthread)
   
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
     

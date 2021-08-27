@@ -28,7 +28,7 @@ A C++ High Performance TcpSerer
 #  用法
 
 ```
-./server_Release [port] [iothreadnum]
+./server [port] [iothreadnum]
 
 默认端口是8080，IO线程数是4(不包括主线程)
 ```
